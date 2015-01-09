@@ -356,7 +356,9 @@ public class ConnectionFragment extends Fragment implements OnClickListener{
 //			if (result.equals("Success")) {
 //				new AyscGettingCityInfo().execute();
 //			}
-			
+
+
+            // Check City work completed or not..
 			isCitysWorkCompleted = true;
 			
 			if (isGoogleMapRequested && isCitysWorkCompleted && result.equals("Success")) {
