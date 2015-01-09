@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/list_selector"
+    android:orientation="horizontal"
+    android:padding="5dip" >
+
+    <!-- ListRow Thumbnail image for industry -->
+
+    <ImageView
+        android:id="@+id/thumbnail"
+        android:layout_width="25dip"
+        android:layout_height="25dip"
+        android:layout_centerVertical="true"
+        android:src="@drawable/ic_industry" />
+
+    <TextView
+        android:id="@+id/ind_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dip"
+        android:layout_toLeftOf="@+id/counter"
+        android:layout_toRightOf="@id/thumbnail"
+        android:text="Computer Software"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/counter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="2dip"
+        android:layout_marginRight="2dip"
+        android:layout_toLeftOf="@+id/arrow"
+        android:background="@drawable/counter_bg"
+        android:text="9999"
+        android:textColor="@android:color/white" />
+
+    <!-- Rightend Arrow -->
+
+    <ImageView
+        android:id="@+id/arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:background="@drawable/arrow" />
+
+</RelativeLayout>
