@@ -17,6 +17,8 @@ package com.vsplc.android.poc.linkedin.fragments;
  */
 
 import android.annotation.SuppressLint;
+import android.app.FragmentManager;
+import android.app.FragmentManager.OnBackStackChangedListener;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -30,7 +32,9 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.j256.ormlite.dao.Dao;
 import com.vsplc.android.poc.linkedin.BaseActivity;
 import com.vsplc.android.poc.linkedin.R;
 import com.vsplc.android.poc.linkedin.linkedin_api.interfaces.Callback;
@@ -38,21 +42,29 @@ import com.vsplc.android.poc.linkedin.linkedin_api.interfaces.DownloadObserver;
 import com.vsplc.android.poc.linkedin.linkedin_api.model.EasyLinkedIn;
 import com.vsplc.android.poc.linkedin.linkedin_api.utils.Config;
 import com.vsplc.android.poc.linkedin.logger.Logger;
-import com.vsplc.android.poc.linkedin.model.LinkedinUser;
+import com.vsplc.android.poc.linkedin.model.SignedLinkedinUser;
 import com.vsplc.android.poc.linkedin.networking.ResponseManager;
 import com.vsplc.android.poc.linkedin.utils.ConstantUtils;
 import com.vsplc.android.poc.linkedin.utils.FontUtils;
 import com.vsplc.android.poc.linkedin.utils.LinkedinApplication;
 import com.vsplc.android.poc.linkedin.utils.MethodUtils;
 
-public class LoginFragment extends Fragment implements OnClickListener{
+@SuppressLint("NewApi")
+public class LoginFragment extends Fragment implements OnClickListener, OnBackStackChangedListener{
     
 	private FragmentActivity mFragActivityContext;
 	private Button btnLogin;
 	private TextView tvRights, tvHelp;
 	
+	private FragmentManager fragmentManager;
+	
 	private EasyLinkedIn _EasyLinkedIn;
 	private ProgressDialog progressDialog;
+	
+	private boolean isAlertDialogShown = false;
+	
+	private LinkedinApplication application; 
+	Dao<SignedLinkedinUser, Integer> signedLinkedinUserDao;
 	
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -60,13 +72,20 @@ public class LoginFragment extends Fragment implements OnClickListener{
 
     	mFragActivityContext = getActivity();
     	
+    	application = (LinkedinApplication) mFragActivityContext.getApplication();	
+    	
+    	if (application != null) {
+    		signedLinkedinUserDao = application.getSignedLinkedinUserDao();
+//    		Toast.makeText(mFragActivityContext, "Application", Toast.LENGTH_SHORT).show();
+		}else{
+//			Toast.makeText(mFragActivityContext, "Application is NULL", Toast.LENGTH_SHORT).show();
+		}
+    	
+    	
+    	
         _EasyLinkedIn = EasyLinkedIn.getInstance(mFragActivityContext, Config.LINKEDIN_CONSUMER_KEY, Config.LINKEDIN_CONSUMER_SECRET, 
     			"https://www.linkedin.com", "", "");
     	
-		// If activity recreated (such as from screen rotate), restore
-		// the previous article selection set by onSaveInstanceState().
-		// This is primarily necessary when in the two-pane layout.
-
     	// Inflate the layout for this fragment
     	View view = inflater.inflate(R.layout.login_fragment, container, false);
 
@@ -83,8 +102,10 @@ public class LoginFragment extends Fragment implements OnClickListener{
     	tvHelp.setOnClickListener(this);
     	
         // showing progress dialog while performing heavy tasks..
-        progressDialog = new ProgressDialog(mFragActivityContext);
-        progressDialog.setCancelable(false);
+		progressDialog = new ProgressDialog(MethodUtils.getContextWrapper(mFragActivityContext));	
+		progressDialog.setCancelable(false);
+		progressDialog.setCancelable(false);
+		progressDialog.setCanceledOnTouchOutside(false);
         
     	return view;		
 	}
@@ -93,20 +114,10 @@ public class LoginFragment extends Fragment implements OnClickListener{
 	public void onStart() {
 		super.onStart();
 
-		// During startup, check if there are arguments passed to the fragment.
-		// onStart is a good place to do this because the layout has already
-		// been applied to the fragment at this point so we can safely call the
-		// method below that sets the article text.
-
-		/*
-		 * Bundle args = getArguments(); if (args != null) { // Set article
-		 * based on argument passed in
-		 * updateArticleView(args.getInt(ARG_POSITION)); } else if
-		 * (mCurrentPosition != -1) { // Set article based on saved instance
-		 * state defined during onCreateView
-		 * updateArticleView(mCurrentPosition); }
-		 */
-
+		fragmentManager = mFragActivityContext.getFragmentManager();
+		fragmentManager.addOnBackStackChangedListener(this);
+		
+		((BaseActivity) getActivity()).disableNavigationDrawer();
 	}
 
 	@Override
@@ -119,19 +130,31 @@ public class LoginFragment extends Fragment implements OnClickListener{
 		
 		case R.id.btn_login:
 			
-		    _EasyLinkedIn.authorize(mFragActivityContext, new Callback() {
+			if (MethodUtils.isNetworkAvailable(mFragActivityContext)) {
+				
+				_EasyLinkedIn.authorize(mFragActivityContext, new Callback() {
 
-		        @SuppressLint("NewApi")
-				@Override
-		        public void onSucess(Object data) {		        	
-		        	Logger.vLog("onSucess : ", ""+data.toString());
-		        	new AsyncGetUserProfileDetails().execute();
-		        }
+			        @SuppressLint("NewApi")
+					@Override
+			        public void onSucess(Object data) {		        	
+			        	Logger.vLog("onSucess : ", ""+data.toString());
+			        	new AsyncGetUserProfileDetails().execute();
+			        }
 
-		        @Override
-		        public void onFailure() {}			        
-		        
-		    });
+			        @Override
+			        public void onFailure() {
+			        	Logger.vLog("onFailure : ", "Autorization failure");
+			        	
+			        	if (!isAlertDialogShown) {		        		
+						}
+			        	
+			        }			        
+			        
+			    });
+				
+			}else{
+				MethodUtils.noNetworkConnectionDialog(mFragActivityContext);
+			}					   
 			
 			break;
 			
@@ -189,13 +212,28 @@ public class LoginFragment extends Fragment implements OnClickListener{
     		ResponseManager manager = new ResponseManager();
     		
     		try {
-				LinkedinUser user = manager.parseUserResponse(data);
+    			
+				SignedLinkedinUser user = manager.parseUserResponse(data);
 				Logger.vLog("getUserDetailsDownloadObserver", user.toString());
-				
+					
+				try {
+					signedLinkedinUserDao.create(user);			
+				} catch (Exception ex) {
+					// TODO Auto-generated catch block
+					ex.printStackTrace();
+				}					
+
+				try {
+					Log.v("LoginFragment", "Total Connections : "+ signedLinkedinUserDao.countOf());
+				} catch (java.sql.SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+					
 				MethodUtils.saveObject(mFragActivityContext, user);	
 				
-	            LinkedinApplication.linkedinUser = MethodUtils.getObject(mFragActivityContext);
-				Logger.vLog("getUserDetailsDownloadObserver", LinkedinApplication.linkedinUser.toString());
+	            LinkedinApplication.signedLinkedinUser = MethodUtils.getObject(mFragActivityContext);
+				Logger.vLog("getUserDetailsDownloadObserver", LinkedinApplication.signedLinkedinUser.toString());
 				
 			} catch (Exception ex) {
 				// TODO Auto-generated catch block
@@ -215,18 +253,22 @@ public class LoginFragment extends Fragment implements OnClickListener{
 				
 				Logger.vLog("onPostExecute", "Hello");
 				
-				((BaseActivity)mFragActivityContext).startFetchingTheConnectionsByAsyncTask();
+				((BaseActivity)mFragActivityContext).startFetchingTheConnectionsByAsyncTask();							
 				
 				// Create fragment and give it an argument for the selected article
 	            ProfileFragment profileFragment = (ProfileFragment) Fragment.instantiate(mFragActivityContext, 
 	            						ConstantUtils.PROFILE_FRAGMENT);
 	            
-	            LinkedinUser linkedinUser = MethodUtils.getObject(mFragActivityContext);
-				Logger.vLog("getUserDetailsDownloadObserver", linkedinUser.toString());
-////	            
+	            SignedLinkedinUser signedLinkedinUser = MethodUtils.getObject(mFragActivityContext);
+	            
+	            // update the navigation drawer with user information..
+	            ((BaseActivity)mFragActivityContext).updateNavigationDrawer(signedLinkedinUser);
+	            
+				Logger.vLog("getUserDetailsDownloadObserver", signedLinkedinUser.toString());
+				
 	            Bundle bundle = new Bundle();
 	            bundle.putString("profile_type", "AppUser");
-	            bundle.putSerializable("user", linkedinUser);	            
+	            bundle.putSerializable("user", signedLinkedinUser);	            
 	            profileFragment.setArguments(bundle);
 	            
 	            FragmentTransaction transaction = mFragActivityContext.getSupportFragmentManager().beginTransaction();
@@ -234,15 +276,10 @@ public class LoginFragment extends Fragment implements OnClickListener{
 	            // Replace whatever is in the fragment_container view with this fragment,
 	            // and add the transaction to the back stack so the user can navigate back
 	            transaction.replace(R.id.fragment_container, profileFragment, "profile");
-	            transaction.addToBackStack(null);
+	            transaction.addToBackStack("NavigationProfileFragment");
 
 	            // Commit the transaction
-	            transaction.commitAllowingStateLoss();    
-				
-//				Intent intent = new Intent(mFragActivityContext, CustomizedListActivity.class);
-//				DataWrapper dataWrapper = new DataWrapper((ArrayList<LinkedinUser>)LinkedinApplication.listGlobalConnections);
-//		        intent.putExtra("data", dataWrapper);
-//		        startActivity(intent);
+	            transaction.commitAllowingStateLoss();
 		        
 			}else{
 				// NOP				
@@ -276,5 +313,22 @@ public class LoginFragment extends Fragment implements OnClickListener{
     	@Override
     	public void onDownloadFailure(Object errorData) {}
     };
+
+	@Override
+	public void onBackStackChanged() {
+		// TODO Auto-generated method stub
+		
+		int count = fragmentManager.getBackStackEntryCount();
+		
+		for (int i = 0; i < count; i++) {
+			
+			FragmentManager.BackStackEntry backStackEntry = fragmentManager.getBackStackEntryAt(i);
+			String str = backStackEntry.getName();
+			
+			Toast.makeText(mFragActivityContext, str, Toast.LENGTH_SHORT).show();
+			
+		}
+		
+	}
     
 }

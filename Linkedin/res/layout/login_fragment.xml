@@ -14,33 +14,12 @@
         android:layout_marginBottom="200dp"
         android:background="@drawable/btn_login" />
 
-    <Button
-        android:id="@+id/btn_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="10dip"
-        android:layout_marginRight="10dip"
-        android:background="@drawable/btn_info" />
-
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="100dp"
         android:src="@drawable/ic_launcher" />
-
-    <TextView
-        android:id="@+id/tv_rights"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="10dip"
-        android:text="All rights reserved. VSPLC @2015"
-        android:textColor="@android:color/white"
-        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/tv_help"
@@ -52,5 +31,31 @@
         android:text="Help?"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="5dip" >
+
+        <TextView
+            android:id="@+id/tv_rights"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:text="All rights reserved. VSPLC @2015"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btn_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="5dip"
+            android:background="@drawable/btn_info" />
+    </RelativeLayout>
 
 </RelativeLayout>

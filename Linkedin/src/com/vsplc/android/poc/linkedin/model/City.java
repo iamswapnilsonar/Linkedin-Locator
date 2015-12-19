@@ -1,13 +1,25 @@
 package com.vsplc.android.poc.linkedin.model;
 
-import java.util.List;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 
+/**
+ * City Object
+ * @author VSPLC
+ */
+@DatabaseTable(tableName = "cityInfo")
 public class City {
 	
+	@DatabaseField(generatedId = true)
+	public int _id;	
+	
+	@DatabaseField
 	public String name;
-	private List<LinkedinUser> connections;
+	@DatabaseField
 	public String country;
-	public String latitude = "NA"; 
+	@DatabaseField
+	public String latitude = "NA";
+	@DatabaseField
 	public String longitude = "NA";
 	
 	public City() {

@@ -2,6 +2,10 @@ package com.vsplc.android.poc.linkedin.logger;
 
 import android.util.Log;
 
+/**
+ * Cantrol all application debug log. 
+ * @author VSPLC
+ */
 public class Logger {
 	private static boolean isDebug = true;
 

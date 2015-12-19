@@ -21,6 +21,7 @@ import com.vsplc.android.poc.linkedin.linkedin_api.interfaces.DownloadObserver;
 import com.vsplc.android.poc.linkedin.linkedin_api.interfaces.EasyLinkedInConstants;
 import com.vsplc.android.poc.linkedin.linkedin_api.webservices.AccessTokenWebService;
 import com.vsplc.android.poc.linkedin.logger.Logger;
+import com.vsplc.android.poc.linkedin.utils.MethodUtils;
 
 /**
  * @Links 
@@ -51,10 +52,14 @@ public class EasyLinkedInAuthActivity extends Activity {
 
 	}
 
+	@Override
+	public void onBackPressed() {
+		// TODO Auto-generated method stub
+//		 super.onBackPressed();
+	}
+	
 	private void initViews() {
-
 		_WebView = (WebView) findViewById(R.id.LinkedInAuthActivity_web_view);
-
 	}
 
 	private void setUpViews() {
@@ -87,20 +92,42 @@ public class EasyLinkedInAuthActivity extends Activity {
 			String host = uri.getHost();
 			String callBackHost = callBackUri.getHost();
 
+			Logger.vLog("shouldOverrideUrlLoading", "Host : "+host);
+			Logger.vLog("shouldOverrideUrlLoading", "callBackHost : "+callBackHost);
+			
 			if (host.equals(callBackHost)) {
 
 				view.stopLoading();
+				
 				String code = uri.getQueryParameter("code");
-
-				AccessTokenWebService webservice = new AccessTokenWebService(
-						EasyLinkedInAuthActivity.this,
-						accessTokenDownloadObserver, getAccessTokenUrl(code,
-								EasyLinkedIn.get_CallBackUrl(),
-								EasyLinkedIn.get_ConsumerKey(),
-								EasyLinkedIn.get_ConsumerSecretKey()),
-						new JSONObject());
-				webservice.execute();
-				Log.d("Check", code);
+				
+				Logger.vLog("shouldOverrideUrlLoading", "code : "+code);
+				
+				try{
+					
+					AccessTokenWebService webservice = new AccessTokenWebService(
+							EasyLinkedInAuthActivity.this,
+							accessTokenDownloadObserver, getAccessTokenUrl(code,
+									EasyLinkedIn.get_CallBackUrl(),
+									EasyLinkedIn.get_ConsumerKey(),
+									EasyLinkedIn.get_ConsumerSecretKey()),
+							new JSONObject());
+					
+					webservice.execute();
+					Log.d("Check", code);
+					
+				}catch(NullPointerException ex){
+					// TODO: handle exception
+					ex.printStackTrace();
+					
+					dismissDialog();
+					finish();
+					EasyLinkedIn.authCallback.onFailure();
+					
+				}catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
+				}							
 
 			}
 
@@ -140,8 +167,10 @@ public class EasyLinkedInAuthActivity extends Activity {
 		
 		if (!createdFirstTime) {
 //			_Dialog = DialogBuilder.BuildDialog(this);
-			_Dialog = new ProgressDialog(this);
+			_Dialog = new ProgressDialog(MethodUtils.getContextWrapper(EasyLinkedInAuthActivity.this));
 			_Dialog.setMessage("Connecting to Linkedin Server..");
+			_Dialog.setCancelable(false);		
+			_Dialog.setCanceledOnTouchOutside(false);
 			_Dialog.show();
 			createdFirstTime = true;
 		}else{
@@ -194,15 +223,14 @@ public class EasyLinkedInAuthActivity extends Activity {
 
 		@Override
 		public void onDownloadingStart() {
-
 			showDialog();
-
 		}
 
 		@Override
 		public void onDownloadingComplete(Object data) {
 
-			Log.d("Check", data.toString());
+			Log.d("accessTokenDownloadObserver Check", data.toString());
+			
 			try {
 				
 				Log.v("onDownloadingComplete", ""+data.toString());
@@ -214,15 +242,11 @@ public class EasyLinkedInAuthActivity extends Activity {
 						.putString(EasyLinkedIn.EASY_LINKED_IN_ACCESS_TOKEN,
 								jsonData.getString("access_token")).commit();
 				
-//				EasyLinkedIn
-//				.getSharedPreferenceEditor()
-//				.putString(EasyLinkedIn.EASY_LINKED_IN_TOKEN_SECRET,
-//						jsonData.getString("access_token")).commit();
-				
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 			dismissDialog();
 			finish();
 			EasyLinkedIn.authCallback.onSucess("Success");
@@ -231,9 +255,11 @@ public class EasyLinkedInAuthActivity extends Activity {
 		@Override
 		public void onDownloadFailure(Object errorData) {
 
+			Log.d("accessTokenDownloadObserver Check", errorData.toString());
+			
 			dismissDialog();
 			finish();
-			EasyLinkedIn.authCallback.onSucess("Fail");
+			EasyLinkedIn.authCallback.onFailure();
 
 		}
 	};

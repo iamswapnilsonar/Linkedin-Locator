@@ -1,23 +1,29 @@
 package com.vsplc.android.poc.linkedin.fragments;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.vsplc.android.poc.linkedin.BaseActivity;
 import com.vsplc.android.poc.linkedin.R;
@@ -26,6 +32,7 @@ import com.vsplc.android.poc.linkedin.logger.Logger;
 import com.vsplc.android.poc.linkedin.model.LinkedinUser;
 import com.vsplc.android.poc.linkedin.utils.ConstantUtils;
 import com.vsplc.android.poc.linkedin.utils.DataWrapper;
+import com.vsplc.android.poc.linkedin.utils.FontUtils;
 import com.vsplc.android.poc.linkedin.utils.LinkedinApplication;
 import com.vsplc.android.poc.linkedin.utils.MethodUtils;
 
@@ -35,6 +42,7 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 	private ListView list;
 	
 	private Button btnLeft;
+	private EditText edtSearch;
 	private IndustryListAdapter adapter;
 	
 	private List<String> industryList;
@@ -53,6 +61,7 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 		
 		btnLeft = (Button) view.findViewById(R.id.btn_left);		
 		list = (ListView) view.findViewById(R.id.list);
+		edtSearch = (EditText) view.findViewById(R.id.edt_search);
 		
 		return view;
 	}
@@ -66,14 +75,18 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 		industryList = new ArrayList<String>();
 		
 		// showing progress dialog while performing heavy tasks..
-		progressDialog = new ProgressDialog(mFragActivityContext);
+		progressDialog = new ProgressDialog(MethodUtils.getContextWrapper(mFragActivityContext));	
 		progressDialog.setCancelable(false);
+		progressDialog.setCancelable(false);
+		progressDialog.setCanceledOnTouchOutside(false);
 		
 		Logger.vLog("IndustriesFragment", "Global Length : "+LinkedinApplication.setOfGlobalIndustryNames.size());		
 		for (String industry : LinkedinApplication.setOfGlobalIndustryNames) {
 			industryList.add(industry);
 		}		
 		Logger.vLog("IndustriesFragment", "Local Length : "+industryList.size());
+				
+		Collections.sort(industryList);
 		
 		adapter = new IndustryListAdapter(mFragActivityContext, industryList);
 		list.setAdapter(adapter);
@@ -84,9 +97,8 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
 				// TODO Auto-generated method stub
-				Toast.makeText(mFragActivityContext, industryList.get(position), Toast.LENGTH_SHORT).show();
 				
-				String industry = industryList.get(position);
+				String industry =  adapter.listIndustries.get(position);
 				Logger.vLog("industriesList : onItemClick",""+industry);
 				
 				new GetIndustryWiseConnections().execute(industry);				
@@ -94,10 +106,65 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 			
 		});
 		
-		btnLeft.setOnClickListener(this);
+		btnLeft.setOnClickListener(this);			
+		
+		edtSearch.setTypeface(FontUtils.getLatoRegularTypeface(mFragActivityContext));
+		edtSearch.addTextChangedListener(new TextWatcher() {
+        
+				@Override
+				public void onTextChanged(CharSequence s, int start, int before, int count) {
+					System.out.println("Text ["+s+"] - Start ["+start+"] - Before ["+before+"] - Count ["+count+"]");
+					
+					if (count < before) {
+						// We're deleting char so we need to reset the adapter data
+						adapter.resetData();
+					}
+						
+					adapter.getFilter().filter(s.toString());
+					
+				}
+				
+				@Override
+				public void beforeTextChanged(CharSequence s, int start, int count,
+						int after) {
+					
+				}
+				
+				@Override
+				public void afterTextChanged(Editable s) {
+				}
+			});
+				
+		edtSearch.setOnFocusChangeListener(new OnFocusChangeListener() {
+			
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				// TODO Auto-generated method stub
+				
+				if (hasFocus) {
+					edtSearch.setHint("");
+				}else{
+					edtSearch.setHint("Browse");
+				}
+				
+			}
+		});
 	}
 
 
+	public void hideKeyboardAndClearSearchText() {   
+
+		edtSearch.clearFocus();
+		edtSearch.setText("");
+
+		// Check if no view has focus:			
+		View view = mFragActivityContext.getCurrentFocus();
+		if (view != null) {
+			InputMethodManager inputManager = (InputMethodManager) mFragActivityContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+			inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+		}
+	}
+	
 	@Override
 	public void onClick(View view) {
 		// TODO Auto-generated method stub
@@ -152,6 +219,8 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 				
 				progressDialog.dismiss();
 
+				hideKeyboardAndClearSearchText();
+				
 				FragmentTransaction transaction = mFragActivityContext.getSupportFragmentManager().beginTransaction();
 				
 				// Create fragment and give it an arguments if any
@@ -161,7 +230,7 @@ public class IndustriesFragment extends Fragment implements OnClickListener{
 				
 				DataWrapper dataWrapper = new DataWrapper((ArrayList<LinkedinUser>)mConnections);
 				bundle.putSerializable("connection_list", dataWrapper);
-				
+				bundle.putString("callingFrom","IndustriesFragment");
 				targetFragment.setArguments(bundle);
 				
 				// Replace whatever is in the fragment_container view with this fragment,

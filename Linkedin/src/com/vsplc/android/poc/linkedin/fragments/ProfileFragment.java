@@ -3,7 +3,10 @@ package com.vsplc.android.poc.linkedin.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.annotation.SuppressLint;
+import android.app.FragmentManager.OnBackStackChangedListener;
 import android.content.Context;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -24,12 +27,14 @@ import com.vsplc.android.poc.linkedin.BaseActivity;
 import com.vsplc.android.poc.linkedin.R;
 import com.vsplc.android.poc.linkedin.logger.Logger;
 import com.vsplc.android.poc.linkedin.model.LinkedinUser;
+import com.vsplc.android.poc.linkedin.model.SignedLinkedinUser;
 import com.vsplc.android.poc.linkedin.utils.CircleTransform;
 import com.vsplc.android.poc.linkedin.utils.ConstantUtils;
 import com.vsplc.android.poc.linkedin.utils.DataWrapper;
 import com.vsplc.android.poc.linkedin.utils.FontUtils;
 
-public class ProfileFragment extends Fragment implements OnClickListener{
+@SuppressLint("NewApi")
+public class ProfileFragment extends Fragment implements OnClickListener, OnBackStackChangedListener{
 	
 	private TextView tvProfileName, tvProfileHeading, tvProfileLocation;
 	
@@ -38,13 +43,18 @@ public class ProfileFragment extends Fragment implements OnClickListener{
 	private ImageView ivProfileImage;
 	private LinearLayout linearLayout;
 	private Button btnSeeOnMap, btnViewProfile, btnSendMessage;
+	
+	@SuppressWarnings("unused")
 	private TextView tvSeeOnMap, tvViewProfile, tvSendMessage;
 	
 	private Button btnLeft;
 	private String profileType;
+	
+//	private FragmentManager fragmentManager;	
 	private FragmentActivity mFragActivityContext;
 		
 	private LinkedinUser user;
+	private SignedLinkedinUser signedLinkedinUser;
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -81,8 +91,10 @@ public class ProfileFragment extends Fragment implements OnClickListener{
 		btnViewProfile.setOnClickListener(this);
 		btnSendMessage.setOnClickListener(this);		
 		
-		tvProfileURL.setSelected(true);
-				
+//		tvProfileURL.setSelected(true);
+		tvProfileURL.setPaintFlags(tvProfileURL.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+		tvProfileURL.setOnClickListener(this);
+		
 		btnLeft = (Button) view.findViewById(R.id.btn_left);				
 		return view;
 	}
@@ -106,25 +118,68 @@ public class ProfileFragment extends Fragment implements OnClickListener{
 			
 			if (profileType.equals("AppUser")) {
 				
-				user = (LinkedinUser) args.getSerializable("user");
-				Logger.vLog("ProfileFragment", ""+user.toString());
+				signedLinkedinUser = (SignedLinkedinUser) args.getSerializable("user");
+				Logger.vLog("ProfileFragment", ""+signedLinkedinUser.toString());
 
-				if (user != null) {
+				if (signedLinkedinUser != null) {
 
-					tvProfileName.setText(user.fname+" "+user.lname);
-					tvProfileHeading.setText(user.headline);
-					tvProfileLocation.setText(user.location);
+					tvProfileName.setText(signedLinkedinUser.fname+" "+signedLinkedinUser.lname);
+					tvProfileHeading.setText(signedLinkedinUser.headline);
+					tvProfileLocation.setText(signedLinkedinUser.location);
 
-					tvIndustry.setText(user.industry);
-					tvProfileURL.setText(user.profileurl);	
+					tvIndustry.setText(signedLinkedinUser.industry);
+					tvProfileURL.setText(signedLinkedinUser.profileurl);	
 
+					
+//					JSONObject json = new JSONObject("");
+//					ArrayList items = json.optJSONArray("uniqueArrays");
+					
+//					String[] stringArray = list.toArray(new String[list.size()]);
+					
+//					String[] skills = signedLinkedinUser.skills;
+					
+//					StringBuilder skillBuilder = new StringBuilder();
+//					
+//					if (skills.length > 0) {
+//						
+//						for (int i = 0; i <= (skills.length-2); i++) {
+//							skillBuilder.append(skills[i]);
+//							skillBuilder.append(", ");
+//						}
+//						
+//						skillBuilder.append(skills[skills.length-1]);						
+//					}
+//					
+//					tvSkills.setText(skillBuilder.toString());	
+					
+//					String[] languages = signedLinkedinUser.languages;
+//					
+//					StringBuilder languagesBuilder = new StringBuilder();
+//					
+//					if (languages.length > 0) {
+//						
+//						for (int i = 0; i <= (languages.length-2); i++) {
+//							languagesBuilder.append(languages[i]);
+//							languagesBuilder.append(", ");
+//						}
+//						
+//						languagesBuilder.append(languages[languages.length-1]);						
+//					}
+//					
+//					tvLanguages.setText(languagesBuilder.toString());	
+					
+					tvProfileSummary.setText(signedLinkedinUser.summary);
+					tvConnectionCount.setText(signedLinkedinUser.connectionsCount);					
+					
 					Picasso picasso = Picasso.with(mFragActivityContext);
-					RequestCreator creator = picasso.load(user.profilepicture);
+					RequestCreator creator = picasso.load(signedLinkedinUser.profilepicture);
 					creator.resize(80, 80);
 					creator.centerCrop();
+					creator.placeholder(R.drawable.btn_viewprofile_pressed);
+					creator.error(R.drawable.btn_viewprofile_pressed);
 					creator.transform(new CircleTransform());
 					creator.into(ivProfileImage);
-					
+										
 					linearLayout.setVisibility(View.GONE);
 				}
 
@@ -148,22 +203,18 @@ public class ProfileFragment extends Fragment implements OnClickListener{
 					((LinearLayout)mFragActivityContext.findViewById(R.id.lin_languages)).setVisibility(View.GONE);
 					((LinearLayout)mFragActivityContext.findViewById(R.id.lin_profile_url)).setVisibility(View.GONE);
 					((LinearLayout)mFragActivityContext.findViewById(R.id.lin_summary)).setVisibility(View.GONE);
-					
-//					tvSkills.setVisibility(View.GONE);
-//					tvLanguages.setVisibility(View.GONE);
-//					tvProfileURL.setVisibility(View.GONE);
-//					tvProfileSummary.setVisibility(View.GONE);
 
 					Picasso picasso = Picasso.with(mFragActivityContext);
 					RequestCreator creator = picasso.load(user.profilepicture);
 					creator.resize(80, 80);
 					creator.centerCrop();
+					creator.placeholder(R.drawable.btn_viewprofile_pressed);
+					creator.error(R.drawable.btn_viewprofile_pressed);
 					creator.transform(new CircleTransform());
 					creator.into(ivProfileImage);
 					
 					linearLayout.setVisibility(View.VISIBLE);
 					
-//					relativeLayout.setVisibility(View.GONE);
 				}
 				
 				btnLeft.setBackgroundResource(R.drawable.btn_back_tap_effect);
@@ -209,92 +260,82 @@ public class ProfileFragment extends Fragment implements OnClickListener{
 		
 		int key = view.getId();
 		
-		switch (key) {
+		FragmentTransaction transaction = mFragActivityContext.getSupportFragmentManager().beginTransaction();
+		Fragment targetFragment = null;
+		String tagFragment = null;
 		
-		case R.id.btn_seeonmap:		
-//			Toast.makeText(mFragActivityContext, "See on Map", Toast.LENGTH_SHORT).show();
+		if (key == R.id.btn_seeonmap) {
 			
 			// Create fragment and give it an argument for the selected article
-            GoogleMapFragment mapFragment = (GoogleMapFragment) Fragment.instantiate(mFragActivityContext, 
+			targetFragment = (GoogleMapFragment) Fragment.instantiate(mFragActivityContext, 
             						ConstantUtils.GOOGLE_MAP_FRAGMENT);	           
 
             Bundle bundle = new Bundle();            
             bundle.putString("marker_type", "LocateOnMap");
 			bundle.putSerializable("user", user);
-            
-			mapFragment.setArguments(bundle);
 			
-            FragmentTransaction transaction = mFragActivityContext.getSupportFragmentManager().beginTransaction();
-            
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction.replace(R.id.fragment_container, mapFragment, "googlemap");
-            transaction.addToBackStack(null);
-
-            // Commit the transaction
-            transaction.commit();
+			bundle.putString("callingFrom","ProfileFragment");
 			
-			break;
-
-		case R.id.btn_viewprofile:		
-//			Toast.makeText(mFragActivityContext, "View Profile", Toast.LENGTH_SHORT).show();
+			targetFragment.setArguments(bundle);
+			tagFragment = "googlemap";
 			
+		}else if (key == R.id.btn_viewprofile || key == R.id.tv_profile_url){
+						
 			// Create fragment and give it an argument for the selected article
-            LinkedinProfileFragment linkedinProfileFragment = (LinkedinProfileFragment) Fragment.instantiate(mFragActivityContext, 
+            targetFragment = (LinkedinProfileFragment) Fragment.instantiate(mFragActivityContext, 
             						ConstantUtils.LINKEDIN_PROFILE_FRAGMENT);	           
             
-            Bundle bundle2 = new Bundle();
-            bundle2.putString("url", user.profileurl);
-            linkedinProfileFragment.setArguments(bundle2);
+            Bundle bundle = new Bundle();
             
-            FragmentTransaction transaction2 = mFragActivityContext.getSupportFragmentManager().beginTransaction();
-
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction2.replace(R.id.fragment_container, linkedinProfileFragment, "linkedinprofile");
-            transaction2.addToBackStack(null);
-
-            // Commit the transaction
-            transaction2.commit();
-			
-			break;
-			
-		case R.id.btn_sendmessage:			
-//			Toast.makeText(mFragActivityContext, "Send Message", Toast.LENGTH_SHORT).show();
-			
+            if (profileType.equals("AppUser")) {
+            	bundle.putString("url", signedLinkedinUser.profileurl);
+			}else{
+				bundle.putString("url", user.profileurl);
+			}                    
+            
+            targetFragment.setArguments(bundle);
+            
+            tagFragment = "linkedinprofile";
+            
+		}else if(key == R.id.btn_sendmessage){
+		
 			List<LinkedinUser> listRecipients  = new ArrayList<LinkedinUser>();
  			listRecipients.add(user);
  			
-//			new LongOperationForSendMessage().execute(listRecipients);
-						
 			// Create fragment and give it an argument for the selected article
-            MessageFragment messageFragment = (MessageFragment) Fragment.instantiate(mFragActivityContext, 
+            targetFragment = (MessageFragment) Fragment.instantiate(mFragActivityContext, 
             						ConstantUtils.MESSAGE_FRAGMENT);	           
 
-            Bundle bundle3 = new Bundle();            
+            Bundle bundle = new Bundle();            
 			            
 			DataWrapper dataWrapper = new DataWrapper((ArrayList<LinkedinUser>)listRecipients);
-			bundle3.putSerializable("connection_list", dataWrapper);			
-			bundle3.putString("callingFrom","ProfileFragment");
-			messageFragment.setArguments(bundle3);
+			bundle.putSerializable("connection_list", dataWrapper);			
+			bundle.putString("callingFrom","ProfileFragment");
+			targetFragment.setArguments(bundle);
 			
-            FragmentTransaction transaction3 = mFragActivityContext.getSupportFragmentManager().beginTransaction();
-            
-            // Replace whatever is in the fragment_container view with this fragment,
-            // and add the transaction to the back stack so the user can navigate back
-            transaction3.replace(R.id.fragment_container, messageFragment, "message");
-            transaction3.addToBackStack(null);
+			tagFragment = "message";
+			
+		}
+		
+		if (targetFragment != null && tagFragment != null) {
+			
+			// Replace whatever is in the fragment_container view with this fragment,
+			// and add the transaction to the back stack so the user can navigate back
+			transaction.replace(R.id.fragment_container, targetFragment, tagFragment);
 
-            // Commit the transaction
-            transaction3.commit();
-            
-			break;
+			transaction.addToBackStack(null);		 
+			transaction.commit();
 			
-			
-		default:
-			break;
 		}
 		
 	}
+
+	@Override
+	public void onBackStackChanged() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	
 	
 }

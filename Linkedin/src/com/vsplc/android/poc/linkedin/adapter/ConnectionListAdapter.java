@@ -3,6 +3,7 @@ package com.vsplc.android.poc.linkedin.adapter;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -14,9 +15,14 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -30,22 +36,33 @@ import com.vsplc.android.poc.linkedin.utils.CircleTransform;
 import com.vsplc.android.poc.linkedin.utils.ConstantUtils;
 import com.vsplc.android.poc.linkedin.utils.DataWrapper;
 
-public class ConnectionListAdapter extends BaseAdapter implements Filterable, OnClickListener{
+@SuppressLint("InflateParams")
+public class ConnectionListAdapter extends BaseAdapter implements Filterable, OnClickListener, OnCheckedChangeListener{
     
 	private Activity activity;
-    public ArrayList<LinkedinUser> data;
+    public static ArrayList<LinkedinUser> data;
     private static LayoutInflater inflater = null; 
     private ArrayList<LinkedinUser> originalData;
     private Filter connectionFilter;
     private ConnectionFragment connectionFragment;
     
-    public ConnectionListAdapter(Fragment fragment, Activity activity, ArrayList<LinkedinUser> data) {
+    @SuppressWarnings("unused")
+	private int mSelectedItem = -1;
+    
+    @SuppressWarnings("unused")
+	private ListView list;
+    
+    @SuppressWarnings("static-access")
+	public ConnectionListAdapter(Fragment fragment, Activity activity, ArrayList<LinkedinUser> data, ListView list) {
         
     	this.activity = activity;
-        this.data = data;
+        ConnectionListAdapter.data = data;
         this.originalData = data;
         inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE); 
         this.connectionFragment = (ConnectionFragment) fragment;
+        
+        connectionFragment.checkBoxState = new boolean[data.size()];
+        this.list = list;
     }
 
     public int getCount() {
@@ -60,29 +77,66 @@ public class ConnectionListAdapter extends BaseAdapter implements Filterable, On
         return position;
     }
     
+    private class ViewHolder {    	
+    	TextView name;
+        TextView industry;
+        TextView location;
+        ImageView thumb_image;
+        Button btn_message; 
+        CheckBox checkBox;
+        @SuppressWarnings("unused")
+		RelativeLayout relativeLayout;
+    }
+    
+    public void selectedAll(boolean isChecked) {
+        
+    	for(int i = 0; i< ConnectionFragment.checkBoxState.length; i++){
+           ConnectionFragment.checkBoxState[i] = isChecked;
+        }
+        notifyDataSetChanged();
+        
+    }
+    
     public View getView(int position, View convertView, ViewGroup parent) {
        
-    	View vi = convertView;
+    	View view = convertView;
         
-    	if(convertView == null)
-            vi = inflater.inflate(R.layout.connection_list_row, null);
-
-        TextView name = (TextView)vi.findViewById(R.id.name); // title
-        TextView industry = (TextView)vi.findViewById(R.id.industry); // artist name
-        TextView location = (TextView)vi.findViewById(R.id.location); // duration
-        ImageView thumb_image=(ImageView)vi.findViewById(R.id.thumbnail); // thumb image
-        Button btn_message = (Button) vi.findViewById(R.id.btn_single_message); 
-        
-//        HashMap<String, String> song = new HashMap<String, String>();
+    	ViewHolder holder;
+    	
+    	if(convertView == null){
+    		 view = inflater.inflate(R.layout.connection_list_row, null);
+    		 holder = new ViewHolder();
+    		 
+    		 holder.name = (TextView)view.findViewById(R.id.name); 
+    		 holder.industry = (TextView)view.findViewById(R.id.industry);
+    		 holder.location = (TextView)view.findViewById(R.id.location);
+    		 holder.thumb_image=(ImageView)view.findViewById(R.id.thumbnail);
+    		 holder.btn_message = (Button) view.findViewById(R.id.btn_single_message); 
+    		 holder.checkBox = (CheckBox) view.findViewById(R.id.checkbox);
+    		 holder.relativeLayout = (RelativeLayout) view.findViewById(R.id.rel_connection_row);
+    		 
+    		 view.setTag(holder);
+    	}else{
+    		holder = (ViewHolder) view.getTag();
+    	}          
+    	
+//    	if (position == mSelectedItem) {
+//			holder.relativeLayout.setBackgroundResource(R.color.faint_blue_color_code);
+//		}
+    	
         LinkedinUser user = data.get(position);
         
         // Setting all values in listview
-        name.setText(user.fname +" "+user.lname);
-        industry.setText(user.industry);
-        location.setText(user.location);
+        holder.name.setText(user.fname +" "+user.lname);
+        holder.industry.setText(user.industry);
+        holder.location.setText(user.location);
         
-        btn_message.setTag(user);
-        btn_message.setOnClickListener(this);
+        holder.btn_message.setTag(user);
+        holder.btn_message.setOnClickListener(this);
+        
+        holder.checkBox.setTag(user);        
+        holder.checkBox.setChecked(ConnectionFragment.checkBoxState[position]);
+        holder.checkBox.setOnCheckedChangeListener(this);
         
         Picasso picasso = Picasso.with(activity);
 		RequestCreator creator = picasso.load(user.profilepicture);
@@ -91,10 +145,9 @@ public class ConnectionListAdapter extends BaseAdapter implements Filterable, On
 		creator.placeholder(R.drawable.btn_viewprofile_pressed);
 		creator.error(R.drawable.btn_viewprofile_pressed);
 		creator.transform(new CircleTransform());
-		creator.into(thumb_image);
-		
+		creator.into(holder.thumb_image);		
         
-        return vi;
+        return view;
     }
     
 	/*
@@ -113,6 +166,7 @@ public class ConnectionListAdapter extends BaseAdapter implements Filterable, On
 		data = originalData;
 	}
     
+	@SuppressLint("DefaultLocale")
 	public class ConnectionFilter extends Filter {
 		
 		@Override
@@ -138,7 +192,8 @@ public class ConnectionListAdapter extends BaseAdapter implements Filterable, On
 					
 					String enteredText = constraint.toString().toUpperCase();
 					
-					if (userName.startsWith(enteredText) || userFName.startsWith(enteredText) || userLName.startsWith(enteredText))
+					if (userName.startsWith(enteredText) || userFName.startsWith(enteredText) || userLName.startsWith(enteredText)
+							|| userName.contains(enteredText))
 						mLinkedinUserList.add(user);
 				}
 				
@@ -209,6 +264,36 @@ public class ConnectionListAdapter extends BaseAdapter implements Filterable, On
 
 		default:
 			break;
+		}
+		
+	}
+
+	@Override
+	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+		// TODO Auto-generated method stub
+		
+		int key = buttonView.getId();
+		
+//		Integer position = (Integer) buttonView.getTag();
+		
+		LinkedinUser linkedinUser = (LinkedinUser) buttonView.getTag();
+		
+//		@SuppressWarnings("unused")
+//		LinkedinUser linkedinUser = data.get(position);
+		
+		if (key == R.id.checkbox) {
+			
+			int position = data.indexOf(linkedinUser);			
+			ConnectionFragment.checkBoxState[position] = isChecked;	
+//			list.getChildAt(position).setBackgroundColor(activity.getResources().getColor(R.color.faint_blue_color_code));
+
+//		    if (save != -1 && save != position){
+//		        parent.getChildAt(save).setBackgroundColor(Color.BLACK);
+//		    }
+
+			
+//			mSelectedItem = position;			
+//			notifyDataSetChanged();
 		}
 		
 	}

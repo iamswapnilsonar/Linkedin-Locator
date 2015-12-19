@@ -44,12 +44,22 @@
         android:orientation="vertical"
         android:padding="5dip" >
 
-        <ImageView
-            android:id="@+id/iv_profileimage"
-            android:layout_width="75dip"
-            android:layout_height="75dip"
-            android:paddingBottom="2dip"
-            android:src="@drawable/ic_launcher" />
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="2dip" >
+
+            <ImageView
+                android:id="@+id/iv_profileimage"
+                android:layout_width="75dip"
+                android:layout_height="75dip"
+                android:src="@drawable/btn_viewprofile" />
+
+            <ImageView
+                android:layout_width="76dip"
+                android:layout_height="76dip"
+                android:src="@drawable/circle" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tv_profilename"
@@ -316,14 +326,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
-                        android:ellipsize="marquee"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:freezesText="true"
-                        android:marqueeRepeatLimit="marquee_forever"
                         android:maxLines="1"
                         android:padding="5dip"
-                        android:scrollHorizontally="true"
                         android:singleLine="true"
                         android:text="swapnil.sonar@vsplc.com"
                         android:textColor="@android:color/white"

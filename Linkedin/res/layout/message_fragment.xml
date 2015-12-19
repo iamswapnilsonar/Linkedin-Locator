@@ -67,11 +67,15 @@
                 android:textSize="18sp" >
             </TextView>
 
-            <EditText
+            <com.vsplc.android.poc.linkedin.views.ContactsCompletionView
                 android:id="@+id/edit_message_receipents"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.85" />
+                android:layout_weight="0.85"
+                android:focusable="true"
+                android:hint="Recipients.."
+                android:textColor="@color/dark_blue_color_code"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -93,7 +97,10 @@
                 android:id="@+id/edit_message_subject"
                 android:layout_width="0dip"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.85" />
+                android:layout_weight="0.85"
+                android:hint="Type Subject"
+                android:textColor="@color/dark_blue_color_code"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -107,12 +114,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="top|left"
-                android:hint="  Browse"
+                android:hint="Type your message"
                 android:inputType="textMultiLine"
                 android:lines="15"
                 android:maxLines="20"
                 android:padding="5dip"
                 android:scrollbars="vertical"
+                android:textColor="@color/dark_blue_color_code"
                 android:textSize="14sp" >
             </EditText>
         </LinearLayout>

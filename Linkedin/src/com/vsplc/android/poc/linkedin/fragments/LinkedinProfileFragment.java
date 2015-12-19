@@ -14,8 +14,8 @@ import android.webkit.WebSettings.PluginState;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.ProgressBar;
 
-import com.vsplc.android.poc.linkedin.BaseActivity;
 import com.vsplc.android.poc.linkedin.R;
 import com.vsplc.android.poc.linkedin.logger.Logger;
 
@@ -24,6 +24,8 @@ public class LinkedinProfileFragment extends Fragment{
 	@SuppressWarnings("unused")
 	private FragmentActivity mFragActivityContext;
 	private WebView webView;
+	
+	private ProgressBar progressBar;
 	
 	private Button btnLeft;
 	
@@ -39,6 +41,7 @@ public class LinkedinProfileFragment extends Fragment{
 		webView = (WebView) view.findViewById(R.id.webview);
 		btnLeft = (Button) view.findViewById(R.id.btn_left);		
 		
+		progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
 		return view;
 	}
 
@@ -78,27 +81,33 @@ public class LinkedinProfileFragment extends Fragment{
 		webView.getSettings().setDomStorageEnabled(true);
 
 		// override the web client to open all links in the same webview
-		webView.setWebViewClient(new MyWebViewClient());
+		webView.setWebViewClient(new MyWebViewClient(progressBar));
 	}
 	
 	private class MyWebViewClient extends WebViewClient {
+		
+		private ProgressBar progressBar;
+		
+		public MyWebViewClient(ProgressBar progressBar) {
+			// TODO Auto-generated constructor stub
+			this.progressBar = progressBar;	
+			progressBar.setVisibility(View.VISIBLE);
+		}
+		
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
-
-//			if (Uri.parse(url).getHost().equals("https://www.linkedin.com")){
-//				
-//				// This is my web site, so do not override; let my WebView load the page
-//				return false;
-//			}
-//			// Otherwise, the link is not for a page on my site, so launch another Activity that handles URLs
-//			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-//			startActivity(intent);
-//			return true;
-
+			
 			view.loadUrl(url);
 			return true;
 		}
 
+		@Override
+		public void onPageFinished(WebView view, String url) {
+			// TODO Auto-generated method stub
+			super.onPageFinished(view, url);
+			progressBar.setVisibility(View.GONE);
+		}
+		
 		@Override
 		public void onReceivedSslError(WebView view, SslErrorHandler handler,
 				SslError error) {

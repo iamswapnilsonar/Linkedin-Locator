@@ -37,7 +37,8 @@
         android:layout_toLeftOf="@+id/arrow"
         android:background="@drawable/counter_bg"
         android:text="9999"
-        android:textColor="@android:color/white" />
+        android:textColor="@android:color/white"
+        android:visibility="invisible" />
 
     <!-- Rightend Arrow -->
 

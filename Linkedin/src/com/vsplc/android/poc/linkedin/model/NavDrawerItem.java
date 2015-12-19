@@ -1,5 +1,9 @@
 package com.vsplc.android.poc.linkedin.model;
 
+/**
+ * Navigation drawer item
+ * @author VSPLC
+ */
 public class NavDrawerItem {
 	
 	private String title;

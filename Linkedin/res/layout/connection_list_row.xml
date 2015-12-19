@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rel_connection_row"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/list_selector"
@@ -11,6 +12,8 @@
         android:layout_height="20dip"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
+        android:button="@drawable/selector"
+        android:checked="false"
         android:focusable="false" />
     <!-- ListRow Left sied Thumbnail image -->
 
@@ -26,7 +29,7 @@
         android:layout_toRightOf="@+id/checkbox"
         android:focusable="false"
         android:padding="3dip"
-        android:src="@drawable/rihanna" >
+        android:src="@drawable/btn_viewprofile_pressed" >
     </ImageView>
 
     <LinearLayout

@@ -11,7 +11,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -21,11 +24,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tokenautocomplete.FilteredArrayAdapter;
+import com.tokenautocomplete.TokenCompleteTextView;
 import com.vsplc.android.poc.linkedin.BaseActivity;
 import com.vsplc.android.poc.linkedin.R;
 import com.vsplc.android.poc.linkedin.linkedin_api.model.EasyLinkedIn;
@@ -33,21 +41,28 @@ import com.vsplc.android.poc.linkedin.logger.Logger;
 import com.vsplc.android.poc.linkedin.model.LinkedinUser;
 import com.vsplc.android.poc.linkedin.utils.DataWrapper;
 import com.vsplc.android.poc.linkedin.utils.FontUtils;
+import com.vsplc.android.poc.linkedin.utils.LinkedinApplication;
 import com.vsplc.android.poc.linkedin.utils.MethodUtils;
+import com.vsplc.android.poc.linkedin.views.ContactsCompletionView;
 
-public class MessageFragment extends Fragment implements OnClickListener{
+public class MessageFragment extends Fragment implements OnClickListener, TokenCompleteTextView.TokenListener{
 
 	private FragmentActivity mFragActivityContext;
 	
 	private ArrayList<LinkedinUser> listLinkedinUsers;
 	
 	private Button btnSend, btnCancel, btnLeft;
-	private EditText edtSubject, edtMessage, edtRecipients;
+	private EditText edtSubject, edtMessage;
+	
+	private ContactsCompletionView edtRecipients;
 	
 	private ProgressDialog pDialog;
 	private Typeface typeface;
 	
 	private String callingFrom;
+	
+	private LinkedinUser[] users;
+	private ArrayAdapter<LinkedinUser> adapter;
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, 
@@ -64,7 +79,8 @@ public class MessageFragment extends Fragment implements OnClickListener{
 		
 		edtSubject = (EditText) view.findViewById(R.id.edit_message_subject);
 		edtMessage = (EditText) view.findViewById(R.id.edit_message_body);
-		edtRecipients = (EditText) view.findViewById(R.id.edit_message_receipents); 		
+		
+		edtRecipients = (ContactsCompletionView) view.findViewById(R.id.edit_message_receipents); 		
 		
 		btnLeft.setOnClickListener(this);
 		btnSend.setOnClickListener(this);
@@ -79,7 +95,12 @@ public class MessageFragment extends Fragment implements OnClickListener{
 		super.onStart();
 
 		// showing progress dialog while performing heavy tasks..
-		pDialog = new ProgressDialog(mFragActivityContext); 
+		pDialog = new ProgressDialog(MethodUtils.getContextWrapper(mFragActivityContext));	
+		pDialog.setCancelable(false);
+		pDialog.setCancelable(false);
+		pDialog.setCanceledOnTouchOutside(false);
+		
+		listLinkedinUsers = new ArrayList<LinkedinUser>();
 		
 		Bundle args = getArguments(); 
 
@@ -93,11 +114,10 @@ public class MessageFragment extends Fragment implements OnClickListener{
 				
 				listLinkedinUsers = mConnections;
 				
-				Logger.vLog("MessageFragment", "Receipents : "+listLinkedinUsers.size());
-				
-				if (listLinkedinUsers.size() > 0) {
-					LinkedinUser user = listLinkedinUsers.get(0);
-					edtRecipients.setText(user.fname+" "+user.lname);
+				Logger.vLog("MessageFragment", "Receipents : "+listLinkedinUsers.size());				
+				// add the recipents to message..
+				for(LinkedinUser user : listLinkedinUsers){
+					edtRecipients.addObject(user);
 				}
 				
 			}catch(Exception ex){
@@ -117,11 +137,74 @@ public class MessageFragment extends Fragment implements OnClickListener{
 		
 		edtRecipients.setTypeface(typeface);
 		edtSubject.setTypeface(typeface);
-		edtMessage.setTypeface(typeface);
+		edtMessage.setTypeface(typeface);		
+		
+		users = (LinkedinUser[]) LinkedinApplication.listGlobalConnections.toArray(
+					new LinkedinUser[LinkedinApplication.listGlobalConnections.size()]);
+		
+		adapter = new FilteredArrayAdapter<LinkedinUser>(mFragActivityContext, R.layout.person_layout, users) {
+            
+        	@Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                
+        		if (convertView == null) {
+
+                    LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+                    convertView = (View)inflater.inflate(R.layout.person_layout, parent, false);
+                }
+
+                LinkedinUser user = getItem(position);
+               
+                TextView userName = (TextView) convertView.findViewById(R.id.name);
+                TextView userEmail = (TextView) convertView.findViewById(R.id.email);
+                
+                userName.setTypeface(typeface);
+                userEmail.setTypeface(typeface);
+                
+                userName.setText(user.fname+" "+user.lname);
+                userEmail.setText(user.industry);
+                         
+                return convertView;
+            }
+
+            @SuppressLint("DefaultLocale")
+			@Override
+            protected boolean keepObject(LinkedinUser user, String mask) {
+                
+//            	mask = mask.toLowerCase();
+//                return obj.getName().toLowerCase().startsWith(mask) || obj.getEmail().toLowerCase().startsWith(mask);
+                
+            	mask = mask.toLowerCase();
+            	return user.fname.toLowerCase().startsWith(mask) || user.lname.toLowerCase().startsWith(mask);
+
+            }
+            
+        };
+		
+		edtRecipients.setAdapter(adapter);
+		edtRecipients.setTokenListener(this);
 		
 	}
 
-
+	public void hideKeyboardAndClearSearchText() {   
+	    
+		edtRecipients.clearFocus();
+		edtRecipients.setText("");
+		
+		edtSubject.clearFocus();
+		edtSubject.setText("");
+		
+		edtMessage.clearFocus();
+		edtMessage.setText("");
+		
+		// Check if no view has focus:			
+	    View view = mFragActivityContext.getCurrentFocus();
+	    if (view != null) {
+	        InputMethodManager inputManager = (InputMethodManager) mFragActivityContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+	        inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+	    }
+	}
+	
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
@@ -131,6 +214,8 @@ public class MessageFragment extends Fragment implements OnClickListener{
 		switch (key) {
 
 		case R.id.btn_left:
+			
+			hideKeyboardAndClearSearchText();
 			
 			if (callingFrom.equals("NavigationDrawer")) {
 				((BaseActivity) getActivity()).showHideNevigationDrawer();
@@ -144,6 +229,17 @@ public class MessageFragment extends Fragment implements OnClickListener{
 		case R.id.btn_send:
 			
 			if (!isEmpty(edtSubject) && !isEmpty(edtMessage)) {
+				
+				listLinkedinUsers.clear();
+				
+				List<Object> list = edtRecipients.getObjects();							
+				
+				for (int i = 0; i < list.size(); i++) {
+					LinkedinUser user = (LinkedinUser) list.get(i);
+					Logger.vLog("Message Fragment", "User : "+user.fname +" "+user.lname);
+					listLinkedinUsers.add(user);
+				}
+				
 				new LongOperationForSendMessage().execute(listLinkedinUsers);
 			}else{
 				Toast.makeText(mFragActivityContext, "Please enter the details..", Toast.LENGTH_SHORT).show();
@@ -152,8 +248,10 @@ public class MessageFragment extends Fragment implements OnClickListener{
 			break;
 			
 		case R.id.btn_cancel:
-			edtSubject.setText("");
-			edtMessage.setText("");
+
+			hideKeyboardAndClearSearchText();
+			getActivity().onBackPressed();
+						
 			break;
 			
 		}
@@ -203,11 +301,7 @@ public class MessageFragment extends Fragment implements OnClickListener{
 				
 				String mSubject = "<subject>"+strSubject+"</subject>";
 				String mMessage = "<body>"+strMessage+"</body>";
-				
-				
-//				builder.append("<subject>Linkedin Locator - Testing</subject>");
-//				builder.append("<body>This is a message from Linkedin-Locator Dev Team, Kindly ignore this message. \nSorry For Inconvenience. \n~Dev Team.</body>");
-				
+								
 				builder.append(mSubject);
 				builder.append(mMessage);
 				
@@ -258,8 +352,7 @@ public class MessageFragment extends Fragment implements OnClickListener{
 			
 			if (result.equals("Success")) {
 				Toast.makeText(mFragActivityContext, "Message Sent Successfully..", Toast.LENGTH_SHORT).show();
-				edtSubject.setText("");
-				edtMessage.setText("");
+				hideKeyboardAndClearSearchText();
 				getActivity().onBackPressed();
 				
 			}else{
@@ -276,5 +369,36 @@ public class MessageFragment extends Fragment implements OnClickListener{
 
 		@Override
 		protected void onProgressUpdate(Void... values) {}
+	}
+
+	@SuppressWarnings("unused")
+	private void updateTokenConfirmation() {
+        
+//    	StringBuilder sb = new StringBuilder("Current tokens:\n");
+//        
+//    	for (Object token: completionView.getObjects()) {
+//            sb.append(token.toString());
+//            sb.append("\n");
+//        }
+//
+//        ((TextView)findViewById(R.id.tokens)).setText(sb);
+    }
+	
+	@Override
+	public void onTokenAdded(Object object) {
+		// TODO Auto-generated method stub
+		
+		if(edtRecipients.getObjects().size() <= 50){
+			
+		}else{
+			//NOP
+		}
+		
+	}
+
+	@Override
+	public void onTokenRemoved(Object object) {
+		// TODO Auto-generated method stub
+		
 	}
 }

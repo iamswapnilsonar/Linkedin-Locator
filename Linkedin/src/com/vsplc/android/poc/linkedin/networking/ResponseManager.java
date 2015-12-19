@@ -1,6 +1,7 @@
 package com.vsplc.android.poc.linkedin.networking;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -10,6 +11,7 @@ import org.json.JSONObject;
 import com.google.android.gms.maps.model.LatLng;
 import com.vsplc.android.poc.linkedin.logger.Logger;
 import com.vsplc.android.poc.linkedin.model.LinkedinUser;
+import com.vsplc.android.poc.linkedin.model.SignedLinkedinUser;
 import com.vsplc.android.poc.linkedin.utils.LinkedinApplication;
 
 /**
@@ -33,11 +35,20 @@ public class ResponseManager {
 	private static final String TAG_LK_USER_LAST_NAME = "lastName";
 	private static final String TAG_LK_USER_INDUSTRY = "industry";
 	private static final String TAG_LK_USER_LOCATION = "location";
+	
+	private static final String TAG_LK_USER_EMAIL = "emailAddress";
+	private static final String TAG_LK_USER_LANGUAGES = "languages";
+	private static final String TAG_LK_USER_SKILLS = "skills";
+	private static final String TAG_LK_USER_SUMMARY = "summary";
+	private static final String TAG_TOTAL = "_total";
+	private static final String TAG_LK_USER_LANGUAGE = "language";
+	private static final String TAG_LK_USER_SKILL = "skill";
+	private static final String TAG_LK_USER_CONNECTION_COUNT = "numConnections";	
 
 	// location parameters
 	private static final String TAG_LK_USER_LOCATION_COUNTRY = "country";
 	private static final String TAG_LK_USER_LOCATION_COUNTRY_CODE = "code";
-	private static final String TAG_LK_USER_LOCATION_NAME = "name";
+	private static final String TAG_NAME = "name";
 
 	private static final String TAG_LK_USER_HEADLINE = "headline";
 	private static final String TAG_LK_USER_PICTURE_URL = "pictureUrl";	
@@ -63,8 +74,6 @@ public class ResponseManager {
 		
 		JSONObject jsonObject = (JSONObject) jsonResponseObject;
 
-//		Log.v("Linkedin Connections Response : ","" + jsonResponseObject.toString());
-
 		try {
 
 			int iConnectionCount = jsonObject.getInt(TAG_CONNECTION_COUNT);
@@ -72,10 +81,7 @@ public class ResponseManager {
 			LinkedinApplication.iConnectionCount = iConnectionCount;
 			
 			int iConnectionStart = jsonObject.getInt(TAG_CONNECTION_START);
-//			Log.v("Connection Start : ", "" + iConnectionStart);
-
 			int iConnectionTotal = jsonObject.getInt(TAG_CONNECTION_TOTAL);
-//			Log.v("Connection Total : ", "" + iConnectionTotal);
 
 			// contacts JSONArray
 			JSONArray arrLKConnectionValues = jsonObject.getJSONArray(TAG_CONNECTION_VALUES);
@@ -93,43 +99,25 @@ public class ResponseManager {
 
 					JSONObject jsonObjectLKUser = arrLKConnectionValues.getJSONObject(i);
 					fname = jsonObjectLKUser.getString(TAG_LK_USER_FIRST_NAME);
-//					Log.v("LinkedinUser : ", "First Name : "+ fname);
-					
-//					linkedinUser.setStrLinkedinUserFirstName(strLKUserFirstName);
-					
+
 					id = jsonObjectLKUser.getString(TAG_LK_USER_ID);
-//					Log.v("LinkedinUser : ", "ID : " + id);
-//					linkedinUser.setStrLinkedinUserID(strLKUserID);
 
 					try {
-						
-						headline = jsonObjectLKUser.getString(TAG_LK_USER_HEADLINE);
-//						Log.v("LinkedinUser : ", "Industry : "+ industry);
-//						linkedinUser.setStrLinkedinUserWorkingDomain(strLKUserIndustry);
-						
+						headline = jsonObjectLKUser.getString(TAG_LK_USER_HEADLINE);						
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-//						Log.v("JSONException : ", "Industry value not found");
+						ex_json.printStackTrace();
 					}
 					
-					try {
-						
-						industry = jsonObjectLKUser.getString(TAG_LK_USER_INDUSTRY);
-//						Log.v("LinkedinUser : ", "Industry : "+ industry);
-//						linkedinUser.setStrLinkedinUserWorkingDomain(strLKUserIndustry);
-						
+					try {						
+						industry = jsonObjectLKUser.getString(TAG_LK_USER_INDUSTRY);						
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-//						Log.v("JSONException : ", "Industry value not found");
+						ex_json.printStackTrace();
 					}
 
 					try {
 						lname = jsonObjectLKUser.getString(TAG_LK_USER_LAST_NAME);
-//						Log.v("LinkedinUser : ", "Last Name : "+ lname);
-//						linkedinUser.setStrLinkedinUserLastName(strLKUserLastName);
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-//						Log.v("JSONException : ", "Last Name value not found");
+						ex_json.printStackTrace();
 					}
 
 					try {
@@ -143,50 +131,34 @@ public class ResponseManager {
 							
 							country_code = jsonObjectLKUserLocationCountry
 									.getString(TAG_LK_USER_LOCATION_COUNTRY_CODE);
-//							Log.v("LinkedinUser : ", "Country Code : "+ country_code);
-//							linkedinUser.setStrLinkedinUserCountryLocation(strLKUserLocaionCountryCode);
 
 							try {
-								location = jsonObjectLKUserLocation.getString(TAG_LK_USER_LOCATION_NAME);
-//								Log.v("LinkedinUser : ", "Locaion Area : "+ location);
-//								linkedinUser.setStrLinkedinUserLocationArea(strLKUserLocaionArea);
+								location = jsonObjectLKUserLocation.getString(TAG_NAME);
 							} catch (JSONException ex_json) {
-								// TODO: handle exception
-//								Log.v("JSONException : ","Location Area value not found");
+								ex_json.printStackTrace();
 							}
 
 						} catch (JSONException ex_json) {
-							// TODO: handle exception
-//							Log.v("JSONException : ", "Country value not found");
+							ex_json.printStackTrace();
 						}
 
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-//						Log.v("JSONException : ", "Location value not found");
+						ex_json.printStackTrace();
 					}
 					
 					try {
-						
 						profilepicture = jsonObjectLKUser.getString(TAG_LK_USER_PICTURE_URL);
-//						Log.v("LinkedinUser : ", "Industry : "+ industry);
-//						linkedinUser.setStrLinkedinUserWorkingDomain(strLKUserIndustry);
-						
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-//						Log.v("JSONException : ", "Industry value not found");
+						ex_json.printStackTrace();
 					}
 
 					try {
 						profileurl = jsonObjectLKUser.getString(TAG_LK_USER_PROFILE_URL);
-//						Log.v("LinkedinUser : ", "Last Name : "+ lname);
-//						linkedinUser.setStrLinkedinUserLastName(strLKUserLastName);
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-//						Log.v("JSONException : ", "Last Name value not found");
+						ex_json.printStackTrace();
 					}
 
 					linkedinUser = new LinkedinUser(id, fname, lname, industry, country_code, location, profilepicture, profileurl, headline);
-//					Log.v("ResponseManager : ", linkedinUser.toString());
 					
 					// Add the LinkedinUser to list
 					listLinkedinUsers.add(linkedinUser);
@@ -206,20 +178,8 @@ public class ResponseManager {
 			}
 
 		} catch (JSONException jsonException) {
-			// TODO: handle exception
+			jsonException.printStackTrace();
 		}
-
-//		Logger.vLog("LinkedinApplication ", LinkedinApplication.setOfGlobalCountries);
-//		MethodUtils.printSet(LinkedinApplication.setOfGlobalCountries);
-		
-		// Get an iterator
-//		Iterator<String> iterator = LinkedinApplication.setOfGlobalIndustryNames.iterator();
-
-		// Display elements
-//		while (iterator.hasNext()) {
-//			Logger.vLog("printSet", "Value : " + iterator.next());
-//			MethodUtils.getIndustrywiseConnections(iterator.next(), listLinkedinUsers);
-//		}
 		
 		return listLinkedinUsers;
 	}// end of parse() method
@@ -229,7 +189,7 @@ public class ResponseManager {
 	 * @Date : 23 December, 2014 
 	 * @author VSPLC
 	 **/
-	public LinkedinUser parseUserResponse(Object jsonResponseObject) throws Exception { 
+	public SignedLinkedinUser parseUserResponse(Object jsonResponseObject) throws Exception { 
 		
 		JSONObject jsonObject = (JSONObject) jsonResponseObject;
 
@@ -240,41 +200,35 @@ public class ResponseManager {
 			return null;
 			
 		} catch (JSONException jsonException) {
-			// TODO: handle exception
 			
 			String fname = null, lname = null, id = null, industry = null, country_code = null, location = null;
 			String profilepicture = null, profileurl = null, headline = null;
+						
+			String email = null, summary = null, connections = null;
+			String[] languages = new String[0], skills = new String[0];			
 
-			LinkedinUser linkedinUser;
+			SignedLinkedinUser signedLinkedinUser;
 			
 			fname = jsonObject.getString(TAG_LK_USER_FIRST_NAME);
-			// Log.v("LinkedinUser : ", "First Name : "+ fname);
 
 			id = jsonObject.getString(TAG_LK_USER_ID);
-			// Log.v("LinkedinUser : ", "ID : " + id);
 
 			try {
 				headline = jsonObject.getString(TAG_LK_USER_HEADLINE);
-				// Log.v("LinkedinUser : ", "Industry : "+ industry);
 			} catch (JSONException ex_json) {
-				// TODO: handle exception
-				// Log.v("JSONException : ", "Industry value not found");
+				ex_json.printStackTrace();
 			}
 
 			try {
 				industry = jsonObject.getString(TAG_LK_USER_INDUSTRY);
-				// Log.v("LinkedinUser : ", "Industry : "+ industry);
 			} catch (JSONException ex_json) {
-				// TODO: handle exception
-				// Log.v("JSONException : ", "Industry value not found");
+				ex_json.printStackTrace();
 			}
 
 			try {
 				lname = jsonObject.getString(TAG_LK_USER_LAST_NAME);
-				// Log.v("LinkedinUser : ", "Last Name : "+ lname);
 			} catch (JSONException ex_json) {
-				// TODO: handle exception
-				// Log.v("JSONException : ", "Last Name value not found");
+				ex_json.printStackTrace();
 			}
 
 			try {
@@ -287,45 +241,119 @@ public class ResponseManager {
 							.getJSONObject(TAG_LK_USER_LOCATION_COUNTRY);
 
 					country_code = jsonObjectLKUserLocationCountry.getString(TAG_LK_USER_LOCATION_COUNTRY_CODE);
-					// Log.v("LinkedinUser : ", "Country Code : "+ country_code);
 
 					try {
-						location = jsonObjectLKUserLocation.getString(TAG_LK_USER_LOCATION_NAME);
-						// Log.v("LinkedinUser : ", "Locaion Area : "+ location);
+						location = jsonObjectLKUserLocation.getString(TAG_NAME);
 					} catch (JSONException ex_json) {
-						// TODO: handle exception
-						// Log.v("JSONException : ","Location Area value not found");
+						ex_json.printStackTrace();
 					}
 
 				} catch (JSONException ex_json) {
-					// TODO: handle exception
-					// Log.v("JSONException : ", "Country value not found");
+					ex_json.printStackTrace();
 				}
 
 			} catch (JSONException ex_json) {
-				// TODO: handle exception
-				// Log.v("JSONException : ", "Location value not found");
+				ex_json.printStackTrace();
 			}
 
 			try {
-				profilepicture = jsonObject.getString(TAG_LK_USER_PICTURE_URL);
-				// Log.v("LinkedinUser : ", "Industry : "+ industry);
+				profilepicture = jsonObject.getString(TAG_LK_USER_PICTURE_URL);				
 			} catch (JSONException ex_json) {
-				// TODO: handle exception
-				// Log.v("JSONException : ", "Industry value not found");
+				ex_json.printStackTrace();
 			}
 
 			try {
 				profileurl = jsonObject.getString(TAG_LK_USER_PROFILE_URL);
-				// Log.v("LinkedinUser : ", "Last Name : "+ lname);
 			} catch (JSONException ex_json) {
-				// TODO: handle exception
-				// Log.v("JSONException : ", "Last Name value not found");
+				ex_json.printStackTrace();
 			}
 
-			linkedinUser = new LinkedinUser(id, fname, lname, industry, country_code, location, profilepicture, profileurl, headline);
-			// Log.v("ResponseManager : ", linkedinUser.toString());			
-			return linkedinUser;
+			try {
+				email = jsonObject.getString(TAG_LK_USER_EMAIL);
+			} catch (JSONException ex_json) {
+				ex_json.printStackTrace();
+			}
+			
+			try {
+				summary = jsonObject.getString(TAG_LK_USER_SUMMARY);
+			} catch (JSONException ex_json) {
+				ex_json.printStackTrace();
+			}
+			
+			try {
+				int count = jsonObject.getInt(TAG_LK_USER_CONNECTION_COUNT);
+				connections = String.valueOf(count);
+			} catch (JSONException ex_json) {
+				ex_json.printStackTrace();
+			}
+			
+			try {
+				JSONObject languageObject = jsonObject.getJSONObject(TAG_LK_USER_LANGUAGES);
+				
+				int lang_count = languageObject.getInt(TAG_TOTAL);
+				languages = new String[lang_count];
+								
+				JSONArray languageJSONArray = languageObject.getJSONArray(TAG_CONNECTION_VALUES);
+				
+				// when error found at server side may this will come as NULL
+				if (languageJSONArray != null) {
+
+					// looping through all connections
+					for (int i = 0; i < languageJSONArray.length(); i++) {
+						
+						JSONObject langObject = languageJSONArray.getJSONObject(i);						
+						languages[i] = langObject.getJSONObject(TAG_LK_USER_LANGUAGE).getString(TAG_NAME);						
+						
+					}
+				}
+				
+			} catch (JSONException ex_json) {
+				ex_json.printStackTrace();
+			}
+			
+			try {
+				JSONObject skillsObject = jsonObject.getJSONObject(TAG_LK_USER_SKILLS);
+				
+				int count = skillsObject.getInt(TAG_TOTAL);
+				skills = new String[count];
+								
+				JSONArray skillsJSONArray = skillsObject.getJSONArray(TAG_CONNECTION_VALUES);
+				
+				// when error found at server side may this will come as NULL
+				if (skillsJSONArray != null) {
+
+					// looping through all connections
+					for (int i = 0; i < skillsJSONArray.length(); i++) {
+						
+						JSONObject skillObject = skillsJSONArray.getJSONObject(i);						
+						skills[i] = skillObject.getJSONObject(TAG_LK_USER_SKILL).getString(TAG_NAME);						
+						
+					}
+				}
+				
+			} catch (JSONException ex_json) {
+				ex_json.printStackTrace();
+			}
+			
+			
+			ArrayList<String> arrListSkills = new ArrayList<String>(Arrays.asList(skills));			
+			JSONObject skillJsonObject = new JSONObject();
+			skillJsonObject.put("skillArrays", new JSONArray(arrListSkills));
+			String strSkills = skillJsonObject.toString();
+			
+			ArrayList<String> arrListLaugauges = new ArrayList<String>(Arrays.asList(languages));
+			JSONObject langsJsonObject = new JSONObject();
+			langsJsonObject.put("skillArrays", new JSONArray(arrListLaugauges));
+			String strLangs = langsJsonObject.toString();
+			
+			Logger.vLog("ResponseManager", "strSkills : "+strSkills);
+			Logger.vLog("ResponseManager", "strLangs : "+strLangs);
+			
+			signedLinkedinUser = new SignedLinkedinUser(id, fname, lname, industry, 
+					country_code, location, profilepicture, profileurl, headline, email, summary,
+					strSkills, strLangs, connections);
+			
+			return signedLinkedinUser;
 			
 		}
 	}// end of parse() method

@@ -21,17 +21,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Build;
+import android.telephony.TelephonyManager;
+import android.view.ContextThemeWrapper;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.vsplc.android.poc.linkedin.BaseActivity;
 import com.vsplc.android.poc.linkedin.logger.Logger;
 import com.vsplc.android.poc.linkedin.model.LinkedinUser;
+import com.vsplc.android.poc.linkedin.model.SignedLinkedinUser;
 
 public class MethodUtils {
 
@@ -42,10 +52,8 @@ public class MethodUtils {
 		double latitude = 0;
 		double longitude = 0;
 		
-		//String addressStr = "faisalabad";/// this give me correct address
-//		String addressStr = "Pune,India";
-		Geocoder geoCoder = new Geocoder(context);
-
+		Geocoder geoCoder = new Geocoder(context);		
+		
 		try {
 			
 			List<Address> addresses = geoCoder.getFromLocationName(youraddress, 1); 
@@ -65,8 +73,8 @@ public class MethodUtils {
 			
 		}
 
-//		Logger.vLog("getLatLngFromGivenAddressGeoCoder", "Address : "+youraddress);
-		Logger.vLog("getLatLngFromGivenAddressGeoCoder", "Address : "+youraddress+" Latitude : "+latitude+" Longitude : "+longitude);
+		Logger.vLog("getLatLngFromGivenAddressGeoCoder", "Address : "+youraddress+" Latitude : "+
+									latitude+" Longitude : "+longitude);
 		
 		position = new LatLng(latitude, longitude);
 		
@@ -78,6 +86,8 @@ public class MethodUtils {
 		double lat = 0;
 		double lng = 0;
 
+		youraddress = youraddress.replaceAll("\\s", "%20");
+		
 		String uri = "http://maps.google.com/maps/api/geocode/json?address="
 				+ youraddress + "&sensor=false";
 
@@ -161,7 +171,6 @@ public class MethodUtils {
 			mapCountrywiseConnections.put(code, list);
 		}
 
-		// printMap(mapCountrywiseConnections);
 		return mapCountrywiseConnections;
 	}
 
@@ -219,11 +228,6 @@ public class MethodUtils {
 				filteredConnections.add(user);
 			}
 		}
-
-//		Logger.vLog(city + "Users", "" + filteredConnections.size());
-
-//		for (LinkedinUser user : filteredConnections)
-//			Logger.vLog("Print", "Value : " + user.toString());
 		
 		return filteredConnections;
 	}
@@ -231,9 +235,7 @@ public class MethodUtils {
 	
 	public static ArrayList<LinkedinUser> getCitywiseConnections(List<LinkedinUser> mConnections, String city, String country) {
 
-//		List<LinkedinUser> connections = LinkedinApplication.listGlobalConnections;
 		List<LinkedinUser> connections =  mConnections;
-		
 		Logger.vLog("City : ", city);
 		
 		ArrayList<LinkedinUser> filteredConnections = new ArrayList<LinkedinUser>();
@@ -246,11 +248,6 @@ public class MethodUtils {
 				filteredConnections.add(user);
 			}
 		}
-
-//		Logger.vLog(city + "Users", "" + filteredConnections.size());
-
-//		for (LinkedinUser user : filteredConnections)
-//			Logger.vLog("Print", "Value : " + user.toString());
 		
 		return filteredConnections;
 	}
@@ -312,6 +309,7 @@ public class MethodUtils {
 	 * @param countryCode
 	 * @return
 	 */
+	@SuppressLint("DefaultLocale")
 	public static String getISOCountryNameFromCC(String countryCode) {
 		Locale obj = new Locale("", countryCode.toUpperCase());
 		String strCountryName = obj.getDisplayCountry();
@@ -319,24 +317,104 @@ public class MethodUtils {
 	}
 	
 	
-    public static LinkedinUser getObject(Context context){
+    public static SignedLinkedinUser getObject(Context context){
     	SharedPreferences mPrefs = ((BaseActivity) context).getPreferences(Context.MODE_PRIVATE);
     	Gson gson = new Gson();
-        String json = mPrefs.getString("LinkedinUser", "");
-        LinkedinUser user = gson.fromJson(json, LinkedinUser.class);
+        String json = mPrefs.getString("SignedLinkedinUser", "");
+        SignedLinkedinUser user = gson.fromJson(json, SignedLinkedinUser.class);
         return user;
     }
     
-    public static void saveObject(Context context, LinkedinUser object){
+    public static void saveObject(Context context, SignedLinkedinUser object){
 
     	SharedPreferences mPrefs = ((BaseActivity) context).getPreferences(Context.MODE_PRIVATE);
     	Editor prefsEditor = mPrefs.edit();
 
     	Gson gson = new Gson();
     	String json = gson.toJson(object);
-    	prefsEditor.putString("LinkedinUser", json);
+    	prefsEditor.putString("SignedLinkedinUser", json);
     	prefsEditor.commit();
 
     	Logger.vLog("saveObject", "Object Saved..");
     }
+    
+    public static boolean isBetween(int x, int lower, int upper) {
+		return lower <= x && x <= upper;
+	}
+    
+    @SuppressLint("InlinedApi")
+	public static ContextWrapper getContextWrapper(Context context){
+
+    	int API_LEVEL = Integer.valueOf(android.os.Build.VERSION.SDK_INT);
+
+    	ContextWrapper wrapper;
+
+    	if (MethodUtils.isBetween(API_LEVEL, 8, 10)) {
+
+    		Logger.vLog("TimePickerFragment", "API Level is : "+API_LEVEL);
+    		wrapper = new ContextThemeWrapper(context, android.R.style.Theme_Light);
+
+    	} else if (MethodUtils.isBetween(API_LEVEL, 11, 13)) {
+
+    		Logger.vLog("TimePickerFragment", "API Level is : "+API_LEVEL);
+    		wrapper = new ContextThemeWrapper(context, android.R.style.Theme_Holo);
+
+    	} else {
+    		Logger.vLog("TimePickerFragment", "API Level is : "+API_LEVEL);
+    		wrapper = new ContextThemeWrapper(context, android.R.style.Theme_Holo_Light); 
+    	}		    	
+
+    	return wrapper;
+    }
+    
+    @SuppressWarnings("deprecation")
+	public static boolean isNetworkAvailable(Context context) {
+
+    	try {
+
+    		ConnectivityManager connec = (ConnectivityManager) context
+    				.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+    		if (connec.getNetworkInfo(ConnectivityManager.TYPE_WIFI) != null
+    				&& connec.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)
+    			return true;
+
+    		TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+    		if (tm.getDataState() == TelephonyManager.DATA_CONNECTED || tm.getDataState() == TelephonyManager.DATA_CONNECTING)
+    			return true;
+
+    		if (Integer.parseInt(Build.VERSION.SDK) >= 8) {
+
+    			if (connec.getNetworkInfo(ConnectivityManager.TYPE_WIMAX) != null
+    					&& connec.getNetworkInfo(ConnectivityManager.TYPE_WIMAX).getState() == NetworkInfo.State.CONNECTED)
+    				return true;
+    		}
+
+    	} catch (Exception ex) {
+    		ex.printStackTrace(); 
+    		return true;
+    	} catch (Error ex) {
+    		ex.printStackTrace();
+    		return true;
+    	}
+    	
+    	return false;		
+	}
+    
+    public static void noNetworkConnectionDialog(Context context) {
+		
+    	AlertDialog dialog = new AlertDialog.Builder(getContextWrapper(context))
+				.setTitle("Error").setMessage("It seems you're not connected to the internet!")
+				.setIcon(android.R.drawable.stat_notify_error)
+				.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+
+					}
+				}).create();
+		
+		dialog.show();
+	}
 }
