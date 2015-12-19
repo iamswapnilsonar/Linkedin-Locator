@@ -574,7 +574,18 @@ public class ConnectionFragment extends Fragment implements OnClickListener, OnB
 
 		@Override
 		protected void onPostExecute(String result) {
+<<<<<<< HEAD
 			
+=======
+			// progressDialog.dismiss();
+//			Toast.makeText(mContext, result + " in retrieval of cities.", Toast.LENGTH_SHORT).show();			
+//			if (result.equals("Success")) {
+//				new AyscGettingCityInfo().execute();
+//			}
+
+
+            // Check City work completed or not..
+>>>>>>> origin/master
 			isCitysWorkCompleted = true;
 			
 			if (isGoogleMapRequested && isCitysWorkCompleted && result.equals("Success")) {
